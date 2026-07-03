@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Tối ưu LCP: bắt tay sớm với CDN ảnh + preload ảnh Hero -->
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link
+      rel="preload"
+      as="image"
+      href="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=640&auto=format&q=70"
+      imagesrcset="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=480&auto=format&q=70 480w, https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=640&auto=format&q=70 640w, https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=960&auto=format&q=70 960w"
+      imagesizes="(max-width: 768px) 90vw, 530px"
+      fetchpriority="high"
+    />
+
+    <!-- Title -->
+    <title>AeroTune Pro | Tai Nghe Không Dây Cao Cấp - Chống Ồn Chủ Động</title>
+
+    <!-- SEO cơ bản -->
+    <meta name="description" content="AeroTune Pro - tai nghe không dây cao cấp với màng loa Graphene 40mm, chống ồn chủ động AI 45dB, kết nối Bluetooth 5.4, chuẩn chống nước IPX5. Đăng ký ngay để nhận ưu đãi 30%." />
+    <meta name="keywords" content="AeroTune, tai nghe không dây, chống ồn chủ động, tai nghe cao cấp, Bluetooth 5.4" />
+    <meta name="author" content="AeroTune" />
+    <link rel="canonical" href="https://aerotune-pro.vercel.app/" />
+
+    <!-- Open Graph / Facebook, Zalo, ... -->
+    <meta property="og:type" content="product" />
+    <meta property="og:title" content="AeroTune Pro | Tai Nghe Không Dây Cao Cấp - Chống Ồn Chủ Động" />
+    <meta property="og:description" content="Khám phá AeroTune Pro: màng loa Graphene 40mm, chống ồn AI 45dB, pin sạc siêu tốc USB-C. Đăng ký nhận ưu đãi 30% ngay hôm nay." />
+    <meta property="og:image" content="https://aerotune-pro.vercel.app/og-image.png" />
+    <meta property="og:url" content="https://aerotune-pro.vercel.app/" />
+    <meta property="og:locale" content="vi_VN" />
+    <meta property="og:site_name" content="AeroTune" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="AeroTune Pro | Tai Nghe Không Dây Cao Cấp" />
+    <meta name="twitter:description" content="Màng loa Graphene 40mm, chống ồn AI 45dB, Bluetooth 5.4. Ưu đãi 30% cho đăng ký sớm." />
+    <meta name="twitter:image" content="https://aerotune-pro.vercel.app/og-image.png" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

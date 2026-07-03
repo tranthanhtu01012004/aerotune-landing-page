@@ -1,0 +1,3 @@
+/* Reset cơ bản dùng chung toàn app — App.css chịu trách nhiệm phần theme/layout chính */
+* { box-sizing: border-box; }
+body { margin: 0; }
