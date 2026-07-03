@@ -337,6 +337,8 @@ header { position: sticky; top: 0; /* dropdown mobile bám theo header */ backgr
 .highlight-item h3 { font-size: 21px; margin: 12px 0 10px; letter-spacing: -0.3px; }
 .highlight-item p { color: var(--text-muted); font-size: 14.5px; line-height: 1.65; }
 
+.specs-section { padding: 90px 0; background: var(--bg-primary); }
+
 /* ============ Specs: Bento Grid — typography-first ============ */
 .bento-grid {
     display: grid;
@@ -512,8 +514,12 @@ header { position: sticky; top: 0; /* dropdown mobile bám theo header */ backgr
 /* Advanced Chatbot Virtual Assistant Window */
 .chatbot-bubble { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: var(--accent); border-radius: 50%; display: flex; justify-content: center; align-items: center; color: white; font-size: 24px; cursor: pointer; box-shadow: 0 8px 25px rgba(0,0,0,0.2); z-index: 3000; transition: var(--transition); }
 .chatbot-bubble:hover { transform: scale(1.1); background: var(--accent-hover); }
-.chatbot-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); border: 1px solid var(--border-color); z-index: 3000; display: flex; flex-direction: column; transform: translateY(20px); opacity: 0; pointer-events: none; transition: var(--transition); }
-.chatbot-window.open { transform: translateY(0); opacity: 1; pointer-events: auto; }
+.chatbot-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 450px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,0.15); border: 1px solid var(--border-color); z-index: 3000; display: flex; flex-direction: column; transform: translateY(20px); opacity: 0; pointer-events: none;
+    /* visibility:hidden đảm bảo cửa sổ chat khi đóng KHÔNG BAO GIỜ chặn click
+       vào nội dung phía dưới (nó là khối fixed 350x450 phủ góc phải màn hình) */
+    visibility: hidden;
+    transition: opacity 0.4s ease, transform 0.4s ease, visibility 0s linear 0.4s; }
+.chatbot-window.open { transform: translateY(0); opacity: 1; pointer-events: auto; visibility: visible; transition: opacity 0.4s ease, transform 0.4s ease; }
 .chat-header { background: var(--accent); color: white; padding: 15px; border-top-left-radius: 15px; border-top-right-radius: 15px; display: flex; justify-content: space-between; align-items: center; }
 .chat-title { font-size: 15px; font-weight: 700; margin: 0; }
 .chat-header button { background: none; border: none; color: white; font-size: 22px; cursor: pointer; }
@@ -579,8 +585,12 @@ footer {
 /* ==========================================================
    Product Card kiểu showcase (ảnh lớn + chip thông số + giá)
    ========================================================== */
-.product-grid { align-items: stretch; }
-.product-grid > * { height: 100%; }
+/* minmax(0,1fr) thay vì 1fr: ép 2 cột LUÔN bằng nhau, không cho nội dung
+   (giá + nút nowrap) đẩy cột phình lệch sang một bên */
+.product-grid { align-items: stretch; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.product-grid > * { height: 100%; min-width: 0; }
+.product-card { min-width: 0; }
+.product-footer { min-width: 0; }
 
 .product-card {
     background: var(--card-bg);
@@ -749,6 +759,12 @@ footer {
 
 /* Responsive Mobile Rules */
 @media (max-width: 768px) {
+    /* Nén không gian tổng thể: section hẹp lại, tiêu đề nhỏ lại */
+    .features-section, .specs-section, .register-section, .scrollytelling-section { padding: 48px 0; }
+    .section-title { font-size: 24px; margin-bottom: 30px; }
+    .hero-section { padding: 56px 0; }
+    .hero-title { font-size: 32px; }
+
     /* Header mobile: giữ 1 dòng gọn — logo trái, icon + hamburger phải */
     .navbar { padding: 12px 0; gap: 10px; }
     .logo { font-size: 19px; }
@@ -795,8 +811,27 @@ footer {
     .story-card { flex-direction: column; align-items: flex-start; }
     .story-stat { border-left: none; border-top: 1px solid var(--border-color); padding-left: 0; padding-top: 14px; width: 100%; flex-direction: row; justify-content: center; align-items: baseline; gap: 10px; }
     .specs-grid { grid-template-columns: 1fr 1fr; }
-    .product-footer { flex-wrap: wrap; }
-    .product-footer .btn-buy { width: 100%; }
+    /* Lưới sản phẩm mobile: 2 cột như app store, card nén thấp lại */
+    .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .product-card { border-radius: 14px; }
+    .product-media { aspect-ratio: 4 / 3; }
+    .product-fav { width: 30px; height: 30px; top: 8px; right: 8px; font-size: 14px; border-radius: 8px; }
+    .product-body { padding: 10px 10px 2px; }
+    .product-name { font-size: 13.5px; }
+    /* Tagline giới hạn 2 dòng để mọi card cao bằng nhau */
+    .product-tagline {
+        font-size: 11.5px; margin: 4px 0 8px; line-height: 1.45;
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .product-specs { gap: 5px; }
+    .spec-chip { padding: 5px 7px; border-radius: 7px; gap: 1px; }
+    .spec-chip-label { font-size: 9.5px; letter-spacing: 0.3px; }
+    .spec-chip-value { font-size: 11px; }
+    /* Giá VND dài nên cho 1 dòng riêng, nút thon full-width bên dưới
+       -> không bao giờ bị cắt cụt kiểu "1.990...." */
+    .product-footer { flex-direction: column; align-items: flex-start; gap: 8px; padding: 8px 10px 12px; }
+    .product-price { font-size: 15px; letter-spacing: -0.2px; }
+    .product-footer .btn-buy { width: 100%; padding: 8px 0; font-size: 12.5px; border-radius: 9px; }
     /* Footer mobile nén gọn: brand 1 hàng trên, 2 cột link đứng cạnh nhau */
     footer { padding-top: 40px; }
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 22px 16px; padding-bottom: 28px; text-align: left; }
@@ -808,16 +843,42 @@ footer {
     .footer-col ul { gap: 4px; }
     .footer-col a { font-size: 13.5px; display: inline-block; padding: 4px 0; }
     .footer-bottom { padding: 14px 0; font-size: 12px; }
-    .register-grid { grid-template-columns: 1fr; gap: 36px; }
-    .register-intro h2 { font-size: 30px; }
-    .form-card { padding: 30px 22px; }
-    .bento-grid { grid-template-columns: 1fr 1fr; }
-    .bento-media { grid-column: span 2; grid-row: auto; min-height: 220px; }
-    .bento-num { font-size: 42px; }
-    .story-layout { grid-template-columns: 1fr; gap: 24px; }
+    /* Đăng ký: gọn hàng dọc */
+    .register-grid { grid-template-columns: 1fr; gap: 26px; }
+    .register-intro h2 { font-size: 26px; margin: 10px 0 12px; }
+    .register-intro > p { font-size: 14px; }
+    .benefit-list { margin-top: 18px; gap: 10px; }
+    .benefit-list li { font-size: 13.5px; }
+    .form-card { padding: 24px 18px; }
+    .form-field { margin-bottom: 14px; }
+
+    /* Công nghệ đột phá: chữ vừa mắt */
+    .features-grid { gap: 22px; }
+    .highlight-item { padding-top: 16px; }
+    .highlight-item h3 { font-size: 18px; margin: 8px 0 6px; }
+    .highlight-item p { font-size: 13.5px; }
+
+    /* Thông số bento: ô thấp hơn, số vừa phải */
+    .bento-grid { grid-template-columns: 1fr 1fr; gap: 10px; grid-auto-rows: minmax(110px, auto); }
+    .bento-media { grid-column: span 2; grid-row: auto; min-height: 180px; }
+    .bento-tile { padding: 16px 14px 14px; border-radius: 14px; }
+    .bento-num { font-size: 34px; letter-spacing: -1.5px; }
+    .bento-suffix { font-size: 16px; }
+    .bento-label { font-size: 10.5px; margin-top: 6px; }
+    .bento-note { font-size: 12px; margin-top: 4px; }
+
+    /* Khám phá bên trong: panel + step card nén thấp */
+    .story-layout { grid-template-columns: 1fr; gap: 18px; }
     .story-sticky { position: static; }
-    .story-panel { padding: 28px 24px; }
-    .story-panel-stat { font-size: 46px; }
-    .story-steps { padding: 0; gap: 16px; }
-    .story-step-card { opacity: 1; transform: none; }
+    .story-panel { padding: 20px 18px; border-radius: 16px; }
+    .story-panel-num { font-size: 76px; top: -12px; }
+    .story-panel-stat { font-size: 38px; letter-spacing: -1.5px; }
+    .story-panel-label { font-size: 11px; margin-top: 6px; }
+    .story-progress { margin-top: 14px; }
+    .story-progress-seg { width: 26px; height: 3px; }
+    .story-steps { padding: 0; gap: 12px; }
+    .story-step-card { opacity: 1; transform: none; padding: 18px 16px; border-radius: 14px; }
+    .story-step-kicker { font-size: 11px; }
+    .story-step-card h3 { font-size: 17px; margin: 6px 0 8px; }
+    .story-step-card p { font-size: 13.5px; line-height: 1.55; }
 }
