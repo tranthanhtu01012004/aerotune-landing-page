@@ -165,6 +165,27 @@ THÔNG TIN SẢN PHẨM:
 - Đăng ký form trên website để nhận mã giảm giá 30% cho 500 khách đầu tiên.
 - Giao hàng toàn quốc 2-4 ngày (nội thành hỗ trợ giao nhanh 24 giờ), miễn phí vận chuyển cho đơn từ 1.000.000đ.`;
 
+// Bộ trả lời dự phòng theo từ khóa — dùng khi Gemini hết quota/lỗi mạng,
+// đảm bảo chatbot KHÔNG BAO GIỜ "chết" trước mặt người dùng.
+function fallbackReply(message) {
+    const msg = (message || '').toLowerCase();
+    if (msg.includes('giá') || msg.includes('bao nhiêu') || msg.includes('tiền'))
+        return 'AeroTune Pro Premium có giá 4.990.000đ, bản Lite chỉ 1.990.000đ. Đăng ký form trên trang để nhận ngay mã giảm 30% cho 500 khách đầu tiên nhé!';
+    if (msg.includes('pin') || msg.includes('sạc'))
+        return 'AeroTune Pro dùng liên tục 40 giờ, sạc nhanh 10 phút cho 5 giờ nghe nhạc qua cổng USB-C bạn nhé!';
+    if (msg.includes('ồn') || msg.includes('anc') || msg.includes('chống'))
+        return 'Máy trang bị Smart-ANC 45dB tự điều chỉnh theo môi trường, kết hợp 6 micro AI cho cuộc gọi cực trong.';
+    if (msg.includes('bảo hành') || msg.includes('đổi'))
+        return 'Sản phẩm bảo hành chính hãng 24 tháng, 1 đổi 1 trong 30 ngày đầu nếu có lỗi nhà sản xuất ạ.';
+    if (msg.includes('so sánh') || msg.includes('lite') || msg.includes('khác'))
+        return 'Bản Pro (4.990.000đ): ANC 45dB, pin 40h, driver Graphene 40mm. Bản Lite (1.990.000đ): nhỏ gọn 180g, ANC tiêu chuẩn, pin 25h — phù hợp nhu cầu cơ bản. Nếu bạn cần chống ồn tốt và pin trâu thì Pro đáng đầu tư hơn!';
+    if (msg.includes('nước') || msg.includes('mưa') || msg.includes('tập'))
+        return 'AeroTune Pro đạt chuẩn kháng nước IPX5, thoải mái dùng khi tập luyện hay đi mưa nhỏ bạn nhé.';
+    if (msg.includes('giao') || msg.includes('ship'))
+        return 'Bên mình giao toàn quốc 2-4 ngày, nội thành hỗ trợ giao nhanh 24 giờ, miễn phí vận chuyển cho đơn từ 1 triệu đồng.';
+    return 'Cảm ơn bạn đã quan tâm AeroTune Pro! Bạn có thể hỏi mình về giá, pin, chống ồn, bảo hành... hoặc để lại email ở form đăng ký để nhận tư vấn chi tiết kèm mã giảm 30% nhé!';
+}
+
 app.post('/api/chat', async (req, res) => {
     const { message } = req.body;
     if (!message || !message.trim()) {
@@ -177,7 +198,7 @@ app.post('/api/chat', async (req, res) => {
 
     try {
         const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${GEMINI_API_KEY}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -193,7 +214,8 @@ app.post('/api/chat', async (req, res) => {
 
         if (!geminiRes.ok) {
             console.error('❌ Gemini API lỗi:', data.error?.message || geminiRes.status);
-            return res.status(502).json({ error: data.error?.message || 'Gemini API trả về lỗi.' });
+            // Hết quota / lỗi tạm thời -> chuyển sang bộ trả lời dự phòng, KHÔNG báo lỗi ra ngoài
+            return res.json({ reply: fallbackReply(message) });
         }
 
         const reply = data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('').trim();
@@ -204,7 +226,7 @@ app.post('/api/chat', async (req, res) => {
         res.json({ reply });
     } catch (err) {
         console.error('❌ Lỗi khi gọi Gemini:', err.message);
-        res.status(500).json({ error: 'Không thể kết nối tới Gemini API.' });
+        res.json({ reply: fallbackReply(message) });
     }
 });
 
