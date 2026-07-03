@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 // Import các icon hiện đại từ thư viện
 import { HiOutlineSun, HiOutlineMoon, HiOutlineEye } from 'react-icons/hi2'; // Heroicons
 import { FaRegHeart } from 'react-icons/fa'; // FontAwesome Heart
 import { FiShoppingCart } from 'react-icons/fi'; // Feather Icon Cart
 
 function Header({ cartCount, wishlistCount, recentCount, toggleTheme, theme, toggleSidebar }) {
+  // Trạng thái mở/đóng menu hamburger trên mobile
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Bấm vào link nào thì đóng menu lại rồi mới cuộn tới section
+  const closeMenu = () => setIsMenuOpen(false);
+
   // Style chung để căn giữa icon và text count, và tạo khoảng cách
   const iconWrapperStyle = {
     display: 'flex',
@@ -24,17 +30,20 @@ function Header({ cartCount, wishlistCount, recentCount, toggleTheme, theme, tog
     <header>
       <div className="container navbar">
         <a href="#" className="logo">Aero<span>Tune</span></a>
+
+        {/* Menu điều hướng: desktop hiện ngang, mobile thành dropdown trượt xuống */}
         <nav>
-          <ul className="nav-links">
-            <li><a href="#hero">Trang Chủ</a></li>
-            <li><a href="#features">Tính Năng</a></li>
-            <li><a href="#products-list">Sản phẩm</a></li>
-            <li><a href="#specs">Thông Số</a></li>
-            <li><a href="#register">Đăng Ký</a></li>
+          <ul className={`nav-links ${isMenuOpen ? 'open' : ''}`}>
+            <li><a href="#hero" onClick={closeMenu}>Trang Chủ</a></li>
+            <li><a href="#features" onClick={closeMenu}>Tính Năng</a></li>
+            <li><a href="#products-list" onClick={closeMenu}>Sản phẩm</a></li>
+            <li><a href="#specs" onClick={closeMenu}>Thông Số</a></li>
+            <li><a href="#register" onClick={closeMenu}>Đăng Ký</a></li>
           </ul>
         </nav>
+
         <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-         
+
           {/* 1. Icon Theme (Sáng/Tối) - Dùng Heroicons */}
           <button
             id="theme-toggle"
@@ -93,6 +102,18 @@ function Header({ cartCount, wishlistCount, recentCount, toggleTheme, theme, tog
             <FiShoppingCart style={svgIconStyle} />
             <span id="cart-count" style={{ fontWeight: '500' }}>{cartCount}</span>
           </div>
+
+          {/* 5. Nút hamburger: chỉ hiện trên mobile (CSS ẩn ở desktop) */}
+          <button
+            className={`menu-toggle ${isMenuOpen ? 'open' : ''}`}
+            onClick={() => setIsMenuOpen((v) => !v)}
+            aria-label={isMenuOpen ? 'Đóng menu' : 'Mở menu'}
+            aria-expanded={isMenuOpen}
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
       </div>
     </header>
