@@ -191,7 +191,77 @@ app.post('/api/checkout', (req, res) => {
     });
 });
 
+<<<<<<< HEAD
+// ============ CHATBOT AI (Google Gemini) ============
+// Key đặt trong .env (GEMINI_API_KEY) — TUYỆT ĐỐI không đưa key xuống frontend,
+// vì mọi thứ trong frontend đều public, ai cũng đọc được key và xài chùa.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+// "Bộ não" của chatbot: cung cấp thông tin sản phẩm để AI tư vấn đúng,
+// và giới hạn phạm vi trả lời để không lan man ngoài chủ đề.
+const SYSTEM_PROMPT = `Bạn là trợ lý tư vấn bán hàng của AeroTune, một thương hiệu tai nghe cao cấp.
+Trả lời NGẮN GỌN (tối đa 3-4 câu), thân thiện, bằng tiếng Việt, xưng "mình" gọi khách là "bạn".
+Chỉ tư vấn về sản phẩm AeroTune. Câu hỏi ngoài chủ đề thì khéo léo lái về sản phẩm.
+
+THÔNG TIN SẢN PHẨM:
+- AeroTune Pro Premium: 4.990.000đ. Chống ồn chủ động Smart-ANC 45dB tự thích ứng,
+  pin 40 giờ, sạc nhanh 10 phút cho 5 giờ nghe, driver Graphene mạ vàng 40mm,
+  6 micro AI đàm thoại, Bluetooth 5.4 đa điểm (2 thiết bị), chuẩn kháng nước IPX5,
+  nặng 250g, đệm tai memory foam, chứng nhận Hi-Res Audio Gold.
+- AeroTune Lite: 1.990.000đ. Bản nhỏ gọn, pin 25 giờ, ANC tiêu chuẩn, nặng 180g.
+- Đế Sạc Không Dây Cấp Tốc: 690.000đ, công suất 15W, sạc từ tính, cổng USB-C.
+- Hộp Đựng Da Cao Cấp: 450.000đ, da thật, chống sốc, kháng nước bề mặt, khóa nam châm.
+- Bảo hành chính hãng 24 tháng, 1 đổi 1 trong 30 ngày đầu nếu lỗi nhà sản xuất.
+- Đăng ký form trên website để nhận mã giảm giá 30% cho 500 khách đầu tiên.
+- Giao hàng toàn quốc 2-4 ngày, miễn phí vận chuyển cho đơn từ 1.000.000đ.`;
+
+app.post('/api/chat', async (req, res) => {
+    const { message } = req.body;
+    if (!message || !message.trim()) {
+        return res.status(400).json({ error: 'Thiếu nội dung tin nhắn.' });
+    }
+    if (!GEMINI_API_KEY) {
+        console.warn('⚠️ Chưa cấu hình GEMINI_API_KEY trong .env');
+        return res.status(503).json({ error: 'Chatbot AI chưa được cấu hình.' });
+    }
+
+    try {
+        const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                    contents: [{ role: 'user', parts: [{ text: message.trim().slice(0, 500) }] }],
+                    generationConfig: { maxOutputTokens: 400, temperature: 0.7 },
+                }),
+            }
+        );
+
+        const data = await geminiRes.json();
+
+        if (!geminiRes.ok) {
+            console.error('❌ Gemini API lỗi:', data.error?.message || geminiRes.status);
+            return res.status(502).json({ error: data.error?.message || 'Gemini API trả về lỗi.' });
+        }
+
+        const reply = data.candidates?.[0]?.content?.parts?.map((p) => p.text).join('').trim();
+        if (!reply) {
+            return res.status(502).json({ error: 'Gemini không trả về nội dung.' });
+        }
+
+        res.json({ reply });
+    } catch (err) {
+        console.error('❌ Lỗi khi gọi Gemini:', err.message);
+        res.status(500).json({ error: 'Không thể kết nối tới Gemini API.' });
+    }
+});
+
+// Xem lại toàn bộ đơn hàng đã lưu (test nhanh bằng cách mở link này trên trình duyệt)
+=======
 // Xem lại toàn bộ đơn hàng đã lưu
+>>>>>>> 2f8c162f52de52adb41e160d2a3e7564f9d9e88a
 app.get('/api/orders', (req, res) => {
     db.all(`SELECT * FROM orders ORDER BY created_at DESC`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
