@@ -1,4 +1,4 @@
-require('dotenv').config(); // Nạp biến môi trường từ file .env (DISCORD_WEBHOOK_URL,...)
+require('dotenv').config(); // Nạp biến môi trường từ file .env (DISCORD_WEBHOOK_URL, GEMINI_API_KEY,...)
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
@@ -22,24 +22,21 @@ const db = new sqlite3.Database('./aerotune.db', (err) => {
             message TEXT
         )`);
         // Bảng lưu lượt "đã xem" theo từng sản phẩm — dùng cho tính năng đếm view real-time.
-db.run(`CREATE TABLE IF NOT EXISTS product_views (
-    product TEXT PRIMARY KEY,
-    count INTEGER NOT NULL DEFAULT 0
-)`);
-// Bảng lưu đơn hàng khi khách bấm "Thanh toán ngay"
-db.run(`CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    items TEXT NOT NULL,
-    total INTEGER NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
+        db.run(`CREATE TABLE IF NOT EXISTS product_views (
+            product TEXT PRIMARY KEY,
+            count INTEGER NOT NULL DEFAULT 0
+        )`);
+        // Bảng lưu đơn hàng khi khách bấm "Thanh toán ngay"
+        db.run(`CREATE TABLE IF NOT EXISTS orders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            items TEXT NOT NULL,
+            total INTEGER NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
     }
 });
 
 // ============ WEBHOOK THỰC TẾ (Discord) ============
-// Gửi thông báo tới Discord Webhook mỗi khi có dữ liệu người dùng gửi về.
-// - URL đặt trong file .env (DISCORD_WEBHOOK_URL) — không hardcode vào code.
-// - Fire-and-forget: lỗi webhook không được làm hỏng response trả về client.
 const WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
 
 function sendToWebhook(title, fields) {
@@ -60,6 +57,59 @@ function sendToWebhook(title, fields) {
     }).catch((err) => console.warn('⚠️ Gửi webhook thất bại:', err.message));
 }
 
+// ============ API CHATBOT TÍCH HỢP GEMINI AI ============
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+app.post('/api/chat', async (req, res) => {
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: 'Thiếu nội dung tin nhắn (message).' });
+    }
+
+    // Nếu chưa cấu hình Key trong .env, tự động fallback về hệ thống rule-based cũ để tránh sập app
+    if (!GEMINI_API_KEY) {
+        console.warn('⚠️ Chưa cấu hình GEMINI_API_KEY trong file .env. Chạy chế độ fallback.');
+        return res.json({ reply: "Xin chào! Trợ lý AI đang được bảo trì hệ thống kết nối nâng cao, bạn cần hỏi thông tin gì về sản phẩm AeroTune Pro không ạ?" });
+    }
+
+    try {
+        // Gọi API đến mô hình Gemini 2.5 Flash thông qua fetch thuần của Node.js
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `Bạn là trợ lý ảo thông minh, thân thiện của dòng tai nghe cao cấp AeroTune Pro. 
+                        Hãy trả lời khách hàng một cách ngắn gọn (dưới 3 câu), lịch sự, sử dụng các thông tin chính xác sau:
+                        - AeroTune Pro (Bản cao cấp): Giá 4.990.000đ. Thời lượng pin 40 giờ, hỗ trợ sạc nhanh Type-C (sạc 10 phút dùng 5 giờ). Công nghệ chống ồn chủ động Smart-ANC lên đến 45dB. Chống nước chuẩn IPX5 (kháng mồ hôi tốt khi tập thể thao). Có 3 màu sắc thời thượng: Đen Titan, Trắng Bạc và Xanh Rêu. Bảo hành chính hãng 12 tháng, lỗi 1 đổi 1 trong vòng 30 ngày.
+                        - AeroTune Lite (Bản rút gọn): Giá 1.990.000đ nếu khách muốn phiên bản nhỏ gọn, tiết kiệm hơn.
+                        - Hướng dẫn mua hàng: Khách có thể bấm nút "Mua Ngay" hoặc điền Form đăng ký nhận tin trên website để nhận ngay ưu đãi giảm giá 30%.
+                        - Vận chuyển: Giao hàng toàn quốc từ 2-4 ngày, khu vực nội thành hỗ trợ giao nhanh trong 24 giờ.
+                        Tin nhắn của khách hàng: "${message}"`
+                    }]
+                }]
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
+            const botReply = data.candidates[0].content.parts[0].text;
+            res.json({ reply: botReply.trim() });
+        } else {
+            throw new Error('Cấu trúc phản hồi từ Gemini API không hợp lệ.');
+        }
+
+    } catch (error) {
+        console.error('❌ Lỗi kết nối Gemini AI:', error.message);
+        res.status(500).json({ reply: 'Mình chưa có thông tin chính xác cho câu hỏi này, bạn vui lòng để lại email ở form đăng ký để đội ngũ tư vấn viên liên hệ trực tiếp nhé!' });
+    }
+});
+
+// ============ CÁC API KHÁC CỦA HỆ THỐNG ============
+
 // API nhận dữ liệu từ React Form
 app.post('/api/contact', (req, res) => {
     const { name, email, message } = req.body;
@@ -78,7 +128,6 @@ app.post('/api/contact', (req, res) => {
         }
         console.log(`✅ Đã lưu contact id=${this.lastID} (${name})`);
 
-        // Đẩy dữ liệu đăng ký sang Discord Webhook (thời gian thực)
         sendToWebhook('📩 Đăng ký nhận ưu đãi mới', [
             { name: 'Họ tên', value: name, inline: true },
             { name: 'Email', value: email, inline: true },
@@ -89,8 +138,7 @@ app.post('/api/contact', (req, res) => {
     });
 });
 
-// Ghi nhận 1 lượt xem cho sản phẩm (gọi từ hook useViewTracker phía frontend).
-// Dùng UPSERT: nếu sản phẩm đã có thì +1, chưa có thì tạo mới với count = 1.
+// Ghi nhận 1 lượt xem cho sản phẩm
 app.post('/api/view', (req, res) => {
     const { product } = req.body;
     if (!product) return res.status(400).json({ error: 'Thiếu tên sản phẩm (product).' });
@@ -108,7 +156,7 @@ app.post('/api/view', (req, res) => {
     });
 });
 
-// Lấy toàn bộ thống kê lượt xem — có thể dùng để hiển thị "X lượt xem" trên UI.
+// Lấy toàn bộ thống kê lượt xem
 app.get('/api/views', (req, res) => {
     db.all(`SELECT product, count FROM product_views ORDER BY count DESC`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -116,7 +164,7 @@ app.get('/api/views', (req, res) => {
     });
 });
 
-// Lưu đơn hàng khi khách bấm "Thanh toán ngay" ở giỏ hàng
+// Lưu đơn hàng khi khách bấm "Thanh toán ngay"
 app.post('/api/checkout', (req, res) => {
     const { items, total } = req.body;
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -131,7 +179,6 @@ app.post('/api/checkout', (req, res) => {
         }
         console.log(`✅ Đã lưu đơn hàng id=${this.lastID}, tổng tiền ${total}đ`);
 
-        // Đẩy thông tin đơn hàng sang Discord Webhook
         const itemLines = items
             .map((i) => `• ${i.name} x${i.quantity} — ${(i.price * i.quantity).toLocaleString('vi-VN')}đ`)
             .join('\n');
@@ -144,7 +191,7 @@ app.post('/api/checkout', (req, res) => {
     });
 });
 
-// Xem lại toàn bộ đơn hàng đã lưu (test nhanh bằng cách mở link này trên trình duyệt)
+// Xem lại toàn bộ đơn hàng đã lưu
 app.get('/api/orders', (req, res) => {
     db.all(`SELECT * FROM orders ORDER BY created_at DESC`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
@@ -152,7 +199,7 @@ app.get('/api/orders', (req, res) => {
     });
 });
 
-// Health check — Render/UptimeRobot ping vào đây để giữ server "thức"
+// Health check
 app.get('/', (req, res) => {
     res.json({ status: 'ok', service: 'AeroTune Backend API' });
 });
