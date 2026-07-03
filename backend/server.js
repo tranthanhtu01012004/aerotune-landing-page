@@ -57,57 +57,6 @@ function sendToWebhook(title, fields) {
     }).catch((err) => console.warn('⚠️ Gửi webhook thất bại:', err.message));
 }
 
-// ============ API CHATBOT TÍCH HỢP GEMINI AI ============
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-app.post('/api/chat', async (req, res) => {
-    const { message } = req.body;
-
-    if (!message) {
-        return res.status(400).json({ error: 'Thiếu nội dung tin nhắn (message).' });
-    }
-
-    // Nếu chưa cấu hình Key trong .env, tự động fallback về hệ thống rule-based cũ để tránh sập app
-    if (!GEMINI_API_KEY) {
-        console.warn('⚠️ Chưa cấu hình GEMINI_API_KEY trong file .env. Chạy chế độ fallback.');
-        return res.json({ reply: "Xin chào! Trợ lý AI đang được bảo trì hệ thống kết nối nâng cao, bạn cần hỏi thông tin gì về sản phẩm AeroTune Pro không ạ?" });
-    }
-
-    try {
-        // Gọi API đến mô hình Gemini 2.5 Flash thông qua fetch thuần của Node.js
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: `Bạn là trợ lý ảo thông minh, thân thiện của dòng tai nghe cao cấp AeroTune Pro. 
-                        Hãy trả lời khách hàng một cách ngắn gọn (dưới 3 câu), lịch sự, sử dụng các thông tin chính xác sau:
-                        - AeroTune Pro (Bản cao cấp): Giá 4.990.000đ. Thời lượng pin 40 giờ, hỗ trợ sạc nhanh Type-C (sạc 10 phút dùng 5 giờ). Công nghệ chống ồn chủ động Smart-ANC lên đến 45dB. Chống nước chuẩn IPX5 (kháng mồ hôi tốt khi tập thể thao). Có 3 màu sắc thời thượng: Đen Titan, Trắng Bạc và Xanh Rêu. Bảo hành chính hãng 12 tháng, lỗi 1 đổi 1 trong vòng 30 ngày.
-                        - AeroTune Lite (Bản rút gọn): Giá 1.990.000đ nếu khách muốn phiên bản nhỏ gọn, tiết kiệm hơn.
-                        - Hướng dẫn mua hàng: Khách có thể bấm nút "Mua Ngay" hoặc điền Form đăng ký nhận tin trên website để nhận ngay ưu đãi giảm giá 30%.
-                        - Vận chuyển: Giao hàng toàn quốc từ 2-4 ngày, khu vực nội thành hỗ trợ giao nhanh trong 24 giờ.
-                        Tin nhắn của khách hàng: "${message}"`
-                    }]
-                }]
-            })
-        });
-
-        const data = await response.json();
-        
-        if (data.candidates && data.candidates[0]?.content?.parts[0]?.text) {
-            const botReply = data.candidates[0].content.parts[0].text;
-            res.json({ reply: botReply.trim() });
-        } else {
-            throw new Error('Cấu trúc phản hồi từ Gemini API không hợp lệ.');
-        }
-
-    } catch (error) {
-        console.error('❌ Lỗi kết nối Gemini AI:', error.message);
-        res.status(500).json({ reply: 'Mình chưa có thông tin chính xác cho câu hỏi này, bạn vui lòng để lại email ở form đăng ký để đội ngũ tư vấn viên liên hệ trực tiếp nhé!' });
-    }
-});
-
 // ============ CÁC API KHÁC CỦA HỆ THỐNG ============
 
 // API nhận dữ liệu từ React Form
@@ -191,7 +140,6 @@ app.post('/api/checkout', (req, res) => {
     });
 });
 
-<<<<<<< HEAD
 // ============ CHATBOT AI (Google Gemini) ============
 // Key đặt trong .env (GEMINI_API_KEY) — TUYỆT ĐỐI không đưa key xuống frontend,
 // vì mọi thứ trong frontend đều public, ai cũng đọc được key và xài chùa.
@@ -211,9 +159,11 @@ THÔNG TIN SẢN PHẨM:
 - AeroTune Lite: 1.990.000đ. Bản nhỏ gọn, pin 25 giờ, ANC tiêu chuẩn, nặng 180g.
 - Đế Sạc Không Dây Cấp Tốc: 690.000đ, công suất 15W, sạc từ tính, cổng USB-C.
 - Hộp Đựng Da Cao Cấp: 450.000đ, da thật, chống sốc, kháng nước bề mặt, khóa nam châm.
+- AeroTune Buds Mini: 1.290.000đ. True wireless nhỏ gọn, pin 20 giờ kèm hộp sạc, IPX4, nặng 45g.
+- AeroTune Pro có 3 màu: Đen Titan, Trắng Bạc và Xanh Rêu.
 - Bảo hành chính hãng 24 tháng, 1 đổi 1 trong 30 ngày đầu nếu lỗi nhà sản xuất.
 - Đăng ký form trên website để nhận mã giảm giá 30% cho 500 khách đầu tiên.
-- Giao hàng toàn quốc 2-4 ngày, miễn phí vận chuyển cho đơn từ 1.000.000đ.`;
+- Giao hàng toàn quốc 2-4 ngày (nội thành hỗ trợ giao nhanh 24 giờ), miễn phí vận chuyển cho đơn từ 1.000.000đ.`;
 
 app.post('/api/chat', async (req, res) => {
     const { message } = req.body;
@@ -221,8 +171,8 @@ app.post('/api/chat', async (req, res) => {
         return res.status(400).json({ error: 'Thiếu nội dung tin nhắn.' });
     }
     if (!GEMINI_API_KEY) {
-        console.warn('⚠️ Chưa cấu hình GEMINI_API_KEY trong .env');
-        return res.status(503).json({ error: 'Chatbot AI chưa được cấu hình.' });
+        console.warn('⚠️ Chưa cấu hình GEMINI_API_KEY trong file .env. Chạy chế độ fallback.');
+        return res.json({ reply: 'Xin chào! Trợ lý AI đang được bảo trì hệ thống kết nối nâng cao, bạn cần hỏi thông tin gì về sản phẩm AeroTune Pro không ạ?' });
     }
 
     try {
@@ -259,9 +209,6 @@ app.post('/api/chat', async (req, res) => {
 });
 
 // Xem lại toàn bộ đơn hàng đã lưu (test nhanh bằng cách mở link này trên trình duyệt)
-=======
-// Xem lại toàn bộ đơn hàng đã lưu
->>>>>>> 2f8c162f52de52adb41e160d2a3e7564f9d9e88a
 app.get('/api/orders', (req, res) => {
     db.all(`SELECT * FROM orders ORDER BY created_at DESC`, [], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
