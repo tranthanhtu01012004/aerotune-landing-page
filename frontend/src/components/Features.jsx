@@ -120,6 +120,20 @@ function Features({ addToCart, addToWishlist, addToRecentlyViewed }) {
       ],
     },
     {
+      id: 'buds',
+      name: 'AeroTune Buds Mini',
+      price: 1290000,
+      icon: '🎵',
+      img: 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?w=480&auto=format&q=70',
+      tagline: 'Tai nghe true wireless nhỏ gọn trong lòng bàn tay.',
+      specs: [
+        { label: 'Pin', value: '20 giờ (kèm hộp)' },
+        { label: 'Chống nước', value: 'IPX4' },
+        { label: 'Kết nối', value: 'Bluetooth 5.3' },
+        { label: 'Trọng lượng', value: '45g' },
+      ],
+    },
+    {
       id: 'case',
       name: 'Hộp Đựng Da Cao Cấp',
       price: 450000,
